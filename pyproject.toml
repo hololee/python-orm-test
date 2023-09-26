@@ -7,3 +7,6 @@ skip-string-normalization = true
 profile = "black"
 line_length = 120
 force_single_line = true
+
+[tool.autoflake]
+check = true
