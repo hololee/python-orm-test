@@ -1,5 +1,20 @@
 # python-ORM-test
 
+## 시나리오
+
+아래의 DDL과 같은 테이블이 있다고 가정.
+
+```sql
+CREATE TABLE users (
+    id SERIAL NOT NULL, 
+    name VARCHAR, 
+    age INTEGER, 
+    sex INTEGER, 
+    CONSTRAINT users_pkey PRIMARY KEY (id)
+)
+```
+
+
 ## 환경 설정
 
 ### 가상환경
@@ -71,3 +86,5 @@ alembic history --verbose # 과거 마이그레이션 기록 확인.
 ```Shell
 alembic upgrade base:head --sql > migration.sql # base ~ head 까지 변경사항을 migration.sql에 저장.
 ```
+
+
