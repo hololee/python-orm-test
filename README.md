@@ -44,6 +44,7 @@ alembic revision -m "<메시지, 파일명이 되므로 영어로 작성할 것>
 업그레이드 또는 다운그레이드
 
 ```Shell
-alembic upgrade head
-alembic downgrade head-1 # +- 숫자로 변경 가능
+alembic upgrade head # 최신버전까지 업데이트.
+alembic upgrade +1 # 하나씩 업데이트, +- 숫자로 변경 가능.
+alembic downgrade -1 # +- 숫자로 변경 가능.
 ```
