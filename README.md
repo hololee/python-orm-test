@@ -31,3 +31,19 @@ pre-commit autoupdate # 변경한 경우 업데이트.
 pre-commit run -a # 모든 파일 검사.
 ```
 
+## alembic
+
+### 마이그레이션
+
+개정 작성
+
+```Shell
+alembic revision -m "<메시지, 파일명이 되므로 영어로 작성할 것>" 
+```
+
+업그레이드 또는 다운그레이드
+
+```Shell
+alembic upgrade head
+alembic downgrade head-1 # +- 숫자로 변경 가능
+```
