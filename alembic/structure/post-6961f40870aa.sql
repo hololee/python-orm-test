@@ -6,6 +6,4 @@ CREATE TABLE users (
 	sex INTEGER, 
 	region VARCHAR, 
 	CONSTRAINT users_pkey PRIMARY KEY (id)
-)
-
-
+);

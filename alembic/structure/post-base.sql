@@ -5,6 +5,4 @@ CREATE TABLE users (
 	age INTEGER, 
 	sex INTEGER, 
 	CONSTRAINT users_pkey PRIMARY KEY (id)
-)
-
-
+);
