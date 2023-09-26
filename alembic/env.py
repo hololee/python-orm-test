@@ -4,6 +4,8 @@ from logging.config import fileConfig
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 from sqlalchemy import text
+from sqlalchemy.schema import CreateTable
+from sqlalchemy.schema import MetaData
 
 from alembic import context
 
@@ -84,6 +86,22 @@ def run_migrations_online() -> None:
 
         with context.begin_transaction():
             context.run_migrations()
+
+        # DDL 출력.
+        get_current_revision = context.get_context().get_current_revision
+        current_revision_hash = get_current_revision() if get_current_revision() is not None else 'base'
+
+        meta = MetaData()
+        meta.reflect(bind=connectable)
+        ddl_path = os.path.join(config.get_main_option('script_location'), config.get_main_option('ddl_path'))
+
+        if not os.path.isdir(ddl_path):
+            os.mkdir(ddl_path)
+
+        # 해당 revision을 수행했을때의 구조.
+        with open(os.path.join(ddl_path, f'post-{current_revision_hash}.sql'), 'w') as file_ddl:
+            for table in meta.sorted_tables:
+                print(CreateTable(table).compile(connectable), file=file_ddl)
 
 
 if context.is_offline_mode():
