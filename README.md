@@ -14,6 +14,13 @@ CREATE TABLE users (
 )
 ```
 
+### 최신 DB상태를 로컬에 구현해야 하는 경우
+
+```Shell
+alembic upgrade init # 커스텀으로 작성.
+```
+
+
 
 ## 환경 설정
 

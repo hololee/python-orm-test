@@ -4,6 +4,7 @@ from logging.config import fileConfig
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 from sqlalchemy import text
+from sqlalchemy.schema import CreateSchema
 from sqlalchemy.schema import CreateTable
 from sqlalchemy.schema import MetaData
 
@@ -39,6 +40,9 @@ target_metadata = None
 # can be acquired:
 # my_important_option = config.get_main_option("my_important_option")
 # ... etc.
+
+target_schema = config.get_main_option('script_location')
+target_ddl_path = config.get_main_option('ddl_path')
 
 
 def run_migrations_offline() -> None:
@@ -80,28 +84,58 @@ def run_migrations_online() -> None:
 
     with connectable.connect() as connection:
         context.configure(
-            connection=connection, target_metadata=target_metadata, include_schemas=True, version_table_schema='alembic'
+            connection=connection,
+            target_metadata=target_metadata,
+            include_schemas=True,
+            version_table_schema=target_schema,
         )
-        connection.execute(text('CREATE SCHEMA IF NOT EXISTS alembic'))  # 없는 경우 에러 발생 방지.
 
-        with context.begin_transaction():
-            context.run_migrations()
+        if context.get_revision_argument() == 'init':
+            # init argument로 넘어오는 경우 db 초기화 실행.
+            head_revision_hash = context.get_head_revision()
 
-        # DDL 출력.
-        get_current_revision = context.get_context().get_current_revision
-        current_revision_hash = get_current_revision() if get_current_revision() is not None else 'base'
+            # alembic 버전 관리 테이블 복구.
+            if not connection.dialect.has_schema(connection, target_schema):
+                connection.execute(CreateSchema(target_schema))
+                connection.execute(
+                    text(
+                        f'CREATE TABLE {target_schema}.alembic_version (version_num character varying(32) PRIMARY KEY);'
+                    )
+                )
+                connection.execute(
+                    text(f"INSERT INTO {target_schema}.alembic_version (version_num) VALUES ('{head_revision_hash}');")
+                )
 
-        meta = MetaData()
-        meta.reflect(bind=connectable)
-        ddl_path = os.path.join(config.get_main_option('script_location'), config.get_main_option('ddl_path'))
+            # latest db 복구.
+            with open(os.path.join(target_schema, target_ddl_path, f'post-{head_revision_hash}.sql')) as file:
+                connection.execute(text(file.read()))
 
-        if not os.path.isdir(ddl_path):
-            os.mkdir(ddl_path)
+            connection.commit()
+            connection.close()
 
-        # 해당 revision을 수행했을때의 구조.
-        with open(os.path.join(ddl_path, f'post-{current_revision_hash}.sql'), 'w') as file_ddl:
-            for table in meta.sorted_tables:
-                print(CreateTable(table).compile(connectable), file=file_ddl)
+        else:
+            # upgrade or downgrade.
+            if not connection.dialect.has_schema(connection, 'alembic'):
+                connection.execute(CreateSchema('alembic'))  # 없는 경우 에러 발생 방지.
+
+            with context.begin_transaction():
+                context.run_migrations()
+
+            # DDL 출력.
+            get_current_revision = context.get_context().get_current_revision
+            current_revision_hash = get_current_revision() if get_current_revision() is not None else 'base'
+
+            meta = MetaData()
+            meta.reflect(bind=connectable)
+
+            ddl_path = os.path.join(target_schema, target_ddl_path)
+            if not os.path.isdir(ddl_path):
+                os.mkdir(ddl_path)
+
+            # 해당 revision을 수행했을때의 구조 쓰기.
+            with open(os.path.join(ddl_path, f'post-{current_revision_hash}.sql'), 'w') as file_ddl:
+                for table in meta.sorted_tables:
+                    print(str(CreateTable(table).compile(connectable)).rstrip() + ';', file=file_ddl)
 
 
 if context.is_offline_mode():
