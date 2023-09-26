@@ -35,22 +35,39 @@ pre-commit run -a # 모든 파일 검사.
 
 ### 마이그레이션
 
-개정 작성
+#### 개정 작성
 
 ```Shell
 alembic revision -m "<메시지, 파일명이 되므로 영어로 작성할 것>" 
 ```
 
-업그레이드
+#### 업그레이드
 
 ```Shell
 alembic upgrade head # 최신버전까지 업데이트.
 alembic upgrade +1 # 하나씩 업데이트, +- 숫자로 변경 가능.
 ```
 
-다운그레이드
+#### 다운그레이드
 
 ```Shell
 alembic downgrade base # 초기 버전까지 다운그레이드.
 alembic downgrade -1 # +- 숫자로 변경 가능.
+```
+
+#### 정보 얻기
+
+```Shell
+alembic current # 현재 정보 가져오기.
+alembic history --verbose # 과거 마이그레이션 기록 확인.
+```
+
+### 오프라인 모드
+
+#### sql 작성
+
+마이그레이션, 롤백 동작을 sql로 작성 가능하다.
+
+```Shell
+alembic upgrade base:head --sql > migration.sql # base ~ head 까지 변경사항을 migration.sql에 저장.
 ```
