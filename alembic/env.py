@@ -1,3 +1,4 @@
+import os
 from logging.config import fileConfig
 
 from sqlalchemy import engine_from_config
@@ -8,6 +9,17 @@ from alembic import context
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
+
+# alembic.ini 파일의 sqlalchemy.url 속성을 동적으로 할당.
+# sqlalchemy.url = postgresql://postgres:postgres@127.0.0.1:54321/db
+'''
+export ALEMBIC_ENGIN=postgresql ALEMBIC_USER_NAME=postgres ALEMBIC_PASSWORD=postgres ALEMBIC_HOST=127.0.0.1 ALEMBIC_PORT=54321 ALEMBIC_DB_NAME=db
+'''
+if not config.get_main_option('sqlalchemy.url'):
+    config.set_main_option(
+        'sqlalchemy.url',
+        f'{os.environ["ALEMBIC_ENGIN"]}://{os.environ["ALEMBIC_USER_NAME"]}:{os.environ["ALEMBIC_PASSWORD"]}@{os.environ["ALEMBIC_HOST"]}:{os.environ["ALEMBIC_PORT"]}/{os.environ["ALEMBIC_DB_NAME"]}',
+    )
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
@@ -64,9 +76,7 @@ def run_migrations_online() -> None:
     )
 
     with connectable.connect() as connection:
-        context.configure(
-            connection=connection, target_metadata=target_metadata
-        )
+        context.configure(connection=connection, target_metadata=target_metadata)
 
         with context.begin_transaction():
             context.run_migrations()
